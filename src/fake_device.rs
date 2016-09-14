@@ -178,20 +178,20 @@ impl FakeBluetoothDevice {
 
     pub fn get_uuids(&self) -> Result<Vec<String>, Box<Error>> {
         let cloned = self.gatt_services.clone();
-        let gatt_services = match cloned.lock() {
+        let services = match cloned.lock() {
             Ok(guard) => guard.deref().clone(),
             Err(_) => return Err(Box::from("Could not get the value.")),
         };
-        let cloned_2 = self.uuids.clone();
-        let mut uuids = match cloned_2.lock() {
+        let gatt_services = services.into_iter().map(|s| s.get_uuid().unwrap_or("".to_owned())).collect();
+
+        let cloned = self.uuids.clone();
+        let mut uuids = match cloned.lock() {
             Ok(guard) => guard.deref().clone(),
             Err(_) => return Err(Box::from("Could not get the value.")),
         };
-        for service in gatt_services {
-            match service.get_uuid() {
-                Ok(uuid) => uuids.push(uuid),
-                Err(error) => return Err(Box::from(error)),
-            }
+        
+        if uuids != gatt_services {
+            uuids = gatt_services;
         }
         Ok(uuids)
     }
